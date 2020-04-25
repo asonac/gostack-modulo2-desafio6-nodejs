@@ -14,7 +14,7 @@ class TransactionsRepository extends Repository<Transaction> {
 
   constructor() {
     super();
-    this.balance = { income: 0, outcome: 0, total: 0 };
+    this.balance = { income: 0.0, outcome: 0.0, total: 0.0 };
   }
 
   public async getBalance(): Promise<Balance> {
@@ -24,18 +24,38 @@ class TransactionsRepository extends Repository<Transaction> {
       select: ['value', 'type'],
     });
 
-    let i = 0;
-    for (i = 0; i < transactions.length; i += 1) {
-      if (transactions[i].type === 'income') {
-        this.balance.income += transactions[i].value;
-        this.balance.total += transactions[i].value;
-      } else {
-        this.balance.outcome += transactions[i].value;
-        this.balance.total -= transactions[i].value;
-      }
-    }
+    const { income, outcome } = transactions.reduce(
+      (accumulator, transaction) => {
+        switch (transaction.type) {
+          case 'income':
+            accumulator.income += Number(transaction.value);
+            break;
+          case 'outcome':
+            accumulator.outcome += Number(transaction.value);
+            break;
+          default:
+            break;
+        }
 
-    return this.balance;
+        return accumulator;
+      },
+      { income: 0, outcome: 0 },
+    );
+
+    const total = income - outcome;
+
+    // let i = 0;
+    // for (i = 0; i < transactions.length; i += 1) {
+    //   if (transactions[i].type === 'income') {
+    //     this.balance.income += Number(transactions[i].value);
+    //     this.balance.total += Number(transactions[i].value);
+    //   } else {
+    //     this.balance.outcome += Number(transactions[i].value);
+    //     this.balance.total -= Number(transactions[i].value);
+    //   }
+    // }
+
+    return { income, outcome, total };
   }
 }
 
